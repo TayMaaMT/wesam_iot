@@ -17,15 +17,25 @@ app.use(bodyParser.json());
 app.get('/', (req, res) => {
     res.send('Wellcom to IOT API .... ');
 });
-app.get('/write',async (req, res) => {
+app.get('/writeInternal',async (req, res) => {
     try{
-        let { heart_beats , noise , lighting , pollution  } = req.query;
-        console.log(heart_beats , noise , lighting , pollution );
+        let { proximity , noise , lighting   } = req.query;
+        console.log(proximity , noise , lighting  );
         const date = new Date();
-
-        await db.query(`INSERT INTO WESAM_DATA( heart_beats , noise , lighting , pollution,date)
-        VALUES ($1, $2, $3,$4,$5)`,[heart_beats , noise , lighting , pollution, date]);
-        res.status(200).send("OK");
+        const {rows} = await db.query(`INSERT INTO WESAM_DATA( proximity , noise , lighting, date)
+        VALUES ($1, $2, $3,$4) RETURNING id`,[proximity , noise , lighting , date]);
+        res.status(200).send({message:"success",id:rows[0].id});
+    }catch(err){
+        console.log(err)
+    }
+   
+});
+app.get('/writeExternal/:id',async (req, res) => {
+    try{
+        let { heart_beats , pollution  } = req.query;
+        let { id  } = req.params;
+        await db.query(`UPDATE WESAM_DATA SET heart_beats=${heart_beats}, pollution=${pollution} Where id=${id}`)
+        res.status(200).send({message:"success"});
     }catch(err){
         console.log(err)
     }
